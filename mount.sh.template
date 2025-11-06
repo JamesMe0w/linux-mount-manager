@@ -1,0 +1,64 @@
+#!/bin/bash
+# Deployment copy in /usr/local/bin/
+
+# WARNING! BE VERY CAREFUL WITH MOUNTS, HAS THE POTENTIAL TO CORRUPT BOOT ORDER
+# THIS SCRIPT IS SAFER BECAUSE IT RUNS AFTER BOOT.
+
+# Safe Delay
+sleep 15
+
+# Template Values
+BASE="{{BASE}}"
+RAIDS=(
+    "{{RAID1_DEVICE}}:{{RAID1_MOUNT}}:{{RAID1_FOLDERS}}"
+    "{{RAID2_DEVICE}}:{{RAID2_MOUNT}}:{{RAID2_FOLDERS}}"
+)
+
+for raid_entry in "${RAIDS[@]}"; do
+    RAID_DEVICE="${raid_entry%%:*}"
+    RAID_MOUNT="${raid_entry#*:}"
+    RAID_MOUNT="${RAID_MOUNT%%:*}"
+    FOLDERS="${raid_entry##*:}"
+
+    IFS=',' read -ra BIND_FOLDERS <<< "$FOLDERS"
+
+    # Check if RAID device exists up to 10 times. If it does not exist, entire script stops as safety precaution.
+    for i in {1..10}; do
+        if [ -b "$RAID_DEVICE" ]; then
+            echo "RAID DEVICE $RAID_DEVICE found."
+            break
+        fi
+        echo "Waiting for RAID DEVICE $RAID_DEVICE..."
+        sleep 2
+    done
+    if [ ! -b "$RAID_DEVICE" ]; then
+        echo "Warning! RAID DEVICE $RAID_DEVICE not found after 10 tries. Stopping script."
+        exit 1
+    fi
+
+    # Create RAID device mount folder if it does not exist
+    sudo mkdir -p "$RAID_MOUNT"
+    # Conduct RAID device mounting
+    if ! mountpoint -q "$RAID_MOUNT"; then
+        sudo mount "$RAID_DEVICE" "$RAID_MOUNT"
+        echo "$RAID_DEVICE successfully mounted onto $RAID_MOUNT!"
+    fi
+    sleep 5
+
+    # Create main drive folders to be mounted onto
+    if mountpoint -q "$RAID_MOUNT"; then
+        for folder in "${BIND_FOLDERS[@]}"; do
+            sudo mkdir -p "$RAID_MOUNT/$folder"
+            sudo mkdir -p "$BASE/$folder"
+            echo "Created $RAID_MOUNT/$folder folder to be mounted onto $BASE/$folder folder. (IF the folders did NOT exist)"
+
+            if ! mountpoint -q "$BASE/$folder"; then
+                sudo mount --bind "$RAID_MOUNT/$folder" "$BASE/$folder"
+                echo "Mounted $RAID_MOUNT/$folder onto $BASE/$folder!"
+            fi
+        done
+        echo "Script complete."
+    else
+        echo "Error mounting $RAID_DEVICE onto $RAID_MOUNT! Skipping folder mounts."
+    fi
+done

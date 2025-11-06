@@ -1,0 +1,14 @@
+[Unit]
+Description=Manual RAID mount script
+After=mdadm.service local-fs.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart={{DEPLOYMENT_TARGET}}
+User=root
+Group=root
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
