@@ -2,19 +2,19 @@
 # WARNING! BE VERY CAREFUL WITH MOUNTS, HAS THE POTENTIAL TO CORRUPT BOOT ORDER
 
 # === Settings ===
-TEMPLATE="./mount.sh.template"
-LOCAL_OUTPUT="./mount.sh"
-DEPLOY=True
+TEMPLATE="./mount.sh.template" # File path to mount.sh template
+LOCAL_OUTPUT="./mount.sh" # Local output path for generated mount.sh
+DEPLOY=True # Whether the mount should be deployed i.e. become 'permanent'
 DEPLOYMENT_TARGET="/usr/local/bin/mount.sh"
-LOCAL_SERVICE_FILE_TEMPLATE="./mount.service.template"
-LOCAL_SERVICE_FILE="./mount.service"
+LOCAL_SERVICE_FILE_TEMPLATE="./mount.service.template" # File path to service file template
+LOCAL_SERVICE_FILE="./mount.service" # Local output path for generated service
 DEPLOYMENT_SERVICE_FILE="/etc/systemd/system/mount.service"
 
 declare -A REPLACE_VARS=(
-    [BASE]="/home/user"
-    [RAID1_DEVICE]="/dev/md128"
-    [RAID1_MOUNT]="/mnt/raid128_data"
-    [RAID1_FOLDERS]="folder1,folder2,folder3"
+    [BASE]="/home/user" # Base directory for your main drive
+    [RAID1_DEVICE]="/dev/md129" # Added drive base directory
+    [RAID1_MOUNT]="/mnt/md129" # Mount folder for added drive onto main drive
+    [RAID1_FOLDERS]="folder1,folder2,folder3" # Folders to be mounted from mount folder onto base directory
     [RAID2_DEVICE]=""
     [RAID2_MOUNT]=""
     [RAID2_FOLDERS]=""
